@@ -1,23 +1,27 @@
 import { NextPage } from "next"
-import { useAddress, useDisconnect, useMetamask, useSDK } from '@thirdweb-dev/react';
+import { ConnectWallet, useAddress, useSDK } from '@thirdweb-dev/react';
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from 'next/router';
 import { 
   Button, 
   Flex, 
-  Input,
   useToast,
   Heading,
   Container,
   Text,
   Stack,
-  Textarea,
+  Avatar,
+  Select,
+  Icon,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { FcGoogle } from "react-icons/fc";
+
 interface Review {
   user: string;
   review: string;
   rating: number;
+  image: string;
 }
 interface ReviewsProps {
   reviews: Review[];
@@ -25,12 +29,10 @@ interface ReviewsProps {
 
 const Home: NextPage<ReviewsProps> = () => {
   const sdk = useSDK();
-  const address = useAddress();
-  const connect = useMetamask();
-  const disconnect = useDisconnect();
-  const { data: session } = useSession();
-  const router = useRouter();
   const toast = useToast();
+  const router = useRouter();
+  const address = useAddress();
+  const { data: session } = useSession();
   const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
@@ -58,13 +60,13 @@ const Home: NextPage<ReviewsProps> = () => {
     router.push(res?.url || "");
   }
 
-  const createReview = async (review: Omit<Review, "user">) => {
+  const createReview = async (review: string) => {
     const res = await fetch("/api/reviews", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(review)
+      body: JSON.stringify({ review })
     })
     const { message } = await res.json();
     toast(message);
@@ -95,65 +97,90 @@ const Home: NextPage<ReviewsProps> = () => {
             commemorative digital collectible.
           </Text>
 
-          <Stack spacing={0}>
-            <Flex 
-              direction="column"
-              padding="12px"
-              marginTop="12px"
-              borderRadius="md"
-              border="2px solid #EAEAEA"
-              borderBottomRadius={session?.user ? "0px" : "md"}
-              gap={4}
-            >  
-              {address ? (
-                <>
-                  <Text color="gray.600">Address: {address}</Text>
-                  <Button onClick={disconnect}>Disconnect Wallet</Button>
-                  {session?.user ? (
-                      <Button onClick={() => signOut()}>Logout</Button>
-                  ) : (
-                    <>
-                      <Button onClick={googleLogin}>Login with Google</Button>
-                      <Button onClick={walletLogin}>Login with Wallet</Button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <Button onClick={connect}>Connect Wallet</Button>
-              )}
-            </Flex>
-            {address && session?.user && (
-              <Flex 
-                direction="column"
-                padding="12px"
-                borderRadius="md"
-                border="2px solid #EAEAEA"
-                borderTopRadius="0px"
-                borderTop="transparent"
-                gap={4}
-              >
-                <Flex 
-                  as="form"
-                  direction="column"
-                  padding="12px"
-                  bg="gray.200"
-                  gap={4}
-                  borderRadius="md"
-                  onSubmit={(e: any) => {
-                    e.preventDefault();
-                    createReview({
-                      review: e.target.review.value,
-                      rating: parseInt(e.target.rating.value)
-                    })
+          <Flex 
+            as="form"
+            direction="column"
+            padding="12px"
+            bg="gray.200"
+            gap={4}
+            borderRadius="md"
+            align="center"
+          >
+            {session?.user ? (
+              <Flex justify="space-between" width="100%" align="center">
+                <Stack direction="row" align="center" spacing={5}>
+                  <Avatar src={session.user.image || ""} />
+                  <Text fontWeight="medium">
+                    {(session.user as any).address || session.user.email}
+                  </Text>
+                </Stack>
+                <Button 
+                  onClick={() => signOut()} 
+                  width="200px"
+                  bg="white"
+                  _hover={{
+                    bg: "gray.100"
                   }}
                 >
-                  <Textarea name="review" bg="white" placeholder="Review" />
-                  <Input name="rating" bg="white" type="number" placeholder="Rating" />
-                  <Button type="submit" colorScheme="purple">Submit Review</Button>
-                </Flex>
+                  Logout
+                </Button>
               </Flex>
+            ) : (
+              <>
+                <Button 
+                  bg="white"
+                  onClick={googleLogin} 
+                  leftIcon={<Icon as={FcGoogle} />}
+                  width="200px"
+                  _hover={{
+                    bg: "gray.100"
+                  }}
+                >
+                  Login with Google
+                </Button>
+                {address ? (
+                  <Button
+                    onClick={walletLogin}
+                    width="200px"
+                    bg="white"
+                    _hover={{
+                      bg: "gray.100"
+                    }}
+                  >
+                    Login with Wallet
+                  </Button>
+                ) : (
+                  <ConnectWallet />
+                )}
+              </>
             )}
-          </Stack>
+          </Flex>
+
+          {address && session?.user && (
+            <Flex 
+              as="form"
+              direction="column"
+              padding="12px"
+              bg="gray.200"
+              gap={4}
+              borderRadius="md"
+              onSubmit={(e: any) => {
+                e.preventDefault();
+                createReview(e.target.review.value)
+              }}
+            >
+              <Text fontWeight="bold">
+                How good was this session?
+              </Text>
+              <Select name="review" bg="white">
+                <option value="Life changing">Life changing</option>
+                <option value="Helpful for sure">Helpful for sure</option>
+                <option value="Aight">Aight</option>
+                <option value="Waste of time">Waste of time</option>
+              </Select>
+              <Button type="submit" colorScheme="purple">Submit Review</Button>
+            </Flex>
+          )}
         </Flex>
 
         <Heading fontWeight="600" textAlign="center" mb="24px">
@@ -164,16 +191,20 @@ const Home: NextPage<ReviewsProps> = () => {
           {reviews.map((review, id) => (
             <Flex 
               key={id} 
-              direction="column"
-              border={review.user.startsWith("0x") ? "2px solid gray" : "2px solid #EAEAEA"}
+              border="2px solid #EAEAEA"
               borderRadius="md"
               padding="12px"
+              gap={4}
             >
-              <Text>
-                User: {review.user}<br/>
-                Review: {review.review}<br/>
-                Rating: {review.rating}
-              </Text>
+              <Avatar src={review.image || ""} />
+              <Stack spacing={0}>
+                <Text fontWeight="bold">
+                  {review.review}<br/>
+                </Text>
+                <Text fontSize="14px" color="gray.500">
+                  {review.user}<br/>
+                </Text>
+              </Stack>
             </Flex>
           ))}
         </Stack>

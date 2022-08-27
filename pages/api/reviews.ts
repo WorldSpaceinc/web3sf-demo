@@ -23,13 +23,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
   
-    const { review, rating } = req.body;
+    const { review } = req.body;
 
     await prisma.review.create({
       data: { 
         user: (session.user as any)?.address || session.user?.email || "", 
-        review, 
-        rating 
+        image: session.user?.image || "",
+        review,
       },
     })
 
