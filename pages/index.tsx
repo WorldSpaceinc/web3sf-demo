@@ -13,6 +13,7 @@ import {
   Stack,
   Textarea,
 } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 interface Review {
   user: string;
   review: string;
@@ -22,7 +23,7 @@ interface ReviewsProps {
   reviews: Review[];
 }
 
-const Home: NextPage<ReviewsProps> = ({ reviews }) => {
+const Home: NextPage<ReviewsProps> = () => {
   const sdk = useSDK();
   const address = useAddress();
   const connect = useMetamask();
@@ -30,6 +31,17 @@ const Home: NextPage<ReviewsProps> = ({ reviews }) => {
   const { data: session } = useSession();
   const router = useRouter();
   const toast = useToast();
+  const [reviews, setReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    const getReviews = async () => {
+      const res = await fetch("/api/reviews");
+      const { reviews } = await res.json();
+      setReviews(reviews)
+    }
+
+    getReviews();
+  }, [])
 
   const googleLogin = async () => {
     const res = await signIn("google", { redirect: false });
@@ -110,7 +122,7 @@ const Home: NextPage<ReviewsProps> = ({ reviews }) => {
                 <Button onClick={connect}>Connect Wallet</Button>
               )}
             </Flex>
-            {session?.user && (
+            {address && session?.user && (
               <Flex 
                 direction="column"
                 padding="12px"
@@ -153,7 +165,7 @@ const Home: NextPage<ReviewsProps> = ({ reviews }) => {
             <Flex 
               key={id} 
               direction="column"
-              border="2px solid #EAEAEA"
+              border={review.user.startsWith("0x") ? "2px solid gray" : "2px solid #EAEAEA"}
               borderRadius="md"
               padding="12px"
             >
@@ -168,15 +180,6 @@ const Home: NextPage<ReviewsProps> = ({ reviews }) => {
       </Container>
     </>
   )
-}
-
-export async function getServerSideProps() {
-  const res = await fetch("http://localhost:3000/api/reviews");
-  const { reviews } = await res.json();
-
-  return {
-    props: { reviews }
-  }
 }
 
 export default Home;
