@@ -41,13 +41,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (balance.toNumber() === 0) {
         contract.claimTo(address, 0, 1);
         return res.status(200).json({
-          message: "Successfully signed in. You've also received an NFT for joining!"
+          message: "Thanks for leaving a review - you've received an NFT, check your wallet!"
         });
       }
     }
 
     return res.status(200).json({
-      message: "Successfully signed in."
+      message: "Thanks for leaving a review!"
     });
   }
 
