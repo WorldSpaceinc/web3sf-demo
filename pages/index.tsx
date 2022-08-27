@@ -2,7 +2,19 @@ import { NextPage } from "next"
 import { useAddress, useDisconnect, useMetamask, useSDK } from '@thirdweb-dev/react';
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from 'next/router';
-
+import { 
+  Button, 
+  Flex, 
+  Input,
+  useToast,
+  Box,
+  Heading,
+  Container,
+  Text,
+  Stack,
+  createIcon,
+  Textarea,
+} from "@chakra-ui/react";
 interface Review {
   user: string;
   review: string;
@@ -19,6 +31,7 @@ const Home: NextPage<ReviewsProps> = ({ reviews }) => {
   const disconnect = useDisconnect();
   const { data: session } = useSession();
   const router = useRouter();
+  const toast = useToast();
 
   const googleLogin = async () => {
     const res = await signIn("google", { redirect: false });
@@ -36,78 +49,125 @@ const Home: NextPage<ReviewsProps> = ({ reviews }) => {
   }
 
   const createReview = async (review: Omit<Review, "user">) => {
-    await fetch("/api/reviews", {
+    const res = await fetch("/api/reviews", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(review)
     })
+    const { message } = await res.json();
+    toast(message);
     router.reload();
   }
 
   return (
     <>
-      <div 
-        style={{
-          flexDirection: "column", 
-          display: "flex", 
-          padding: "12px", 
-          margin: "8px", 
-          background: "gray" 
-        }}
-      >  
-        {address ? (
-          <>
-            <button onClick={disconnect}>Disconnect Wallet</button>
-            <button onClick={googleLogin}>Login with Google</button>
-            <button onClick={walletLogin}>Login with Wallet</button>
-            <button onClick={() => signOut()}>Logout</button>
-            <p>Your address: {address}</p>
-            <pre>User: {JSON.stringify(session?.user || null)}</pre>
-          </>
-        ) : (
-          <button onClick={connect}>Connect Wallet</button>
-        )}
-      </div>
-      <div style={{ flexDirection: "column", display: "flex" }}>
-        <form 
-          style={{
-            flexDirection: "column", 
-            display: "flex", 
-            padding: "12px", 
-            margin: "8px", 
-            background: "gray",
-            gap: "4px"
-          }}
-          onSubmit={(e: any) => {
-            e.preventDefault();
-            createReview({
-              review: e.target.review.value,
-              rating: parseInt(e.target.rating.value)
-            })
-          }}
+      <Container maxW="3xl">
+        <Flex
+          textAlign="center"
+          direction="column"
+          gap={{ base: 8, md: 14 }}
+          py={{ base: 12, md: 24 }}
         >
-          <input name="review" placeholder="Description" />
-          <input name="rating" type="number" placeholder="Rating" />
-          <button type="submit">Create Review</button>
-        </form>
-        {reviews.map((review, id) => (
-          <div key={id} style={{ 
-            flexDirection: "column", 
-            display: "flex", 
-            background: "gray", 
-            margin: "8px", 
-            padding: "8px" 
-          }}>
-            <p>
-              User: {review.user}<br/>
-              Review: {review.review}<br/>
-              Rating: {review.rating}
-            </p>
-          </div>
-        ))}
-      </div>
+          <Heading
+            fontWeight={600}
+            fontSize={{ base: "2xl", sm: "4xl", md: "6xl" }}
+            lineHeight={"110%"}
+          >
+            WEB3SF Workshop <br />
+            <Text as={"span"} color={"purple.400"}>
+              Adding a POAP Reward to a Customer Review App
+            </Text>
+          </Heading>
+          <Text color={"gray.500"}>
+            Take a moment to login and review our workshop and you will receive a
+            commemorative digital collectible.
+          </Text>
+
+          <Stack spacing={0}>
+            <Flex 
+              direction="column"
+              padding="12px"
+              marginTop="12px"
+              borderRadius="md"
+              border="2px solid #EAEAEA"
+              borderBottomRadius={session?.user ? "0px" : "md"}
+              gap={4}
+            >  
+              {address ? (
+                <>
+                  <Text color="gray.600">Address: {address}</Text>
+                  <Button onClick={disconnect}>Disconnect Wallet</Button>
+                  {session?.user ? (
+                      <Button onClick={() => signOut()}>Logout</Button>
+                  ) : (
+                    <>
+                      <Button onClick={googleLogin}>Login with Google</Button>
+                      <Button onClick={walletLogin}>Login with Wallet</Button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <Button onClick={connect}>Connect Wallet</Button>
+              )}
+            </Flex>
+            {session?.user && (
+              <Flex 
+                direction="column"
+                padding="12px"
+                borderRadius="md"
+                border="2px solid #EAEAEA"
+                borderTopRadius="0px"
+                borderTop="transparent"
+                gap={4}
+              >
+                <Flex 
+                  as="form"
+                  direction="column"
+                  padding="12px"
+                  bg="gray.200"
+                  gap={4}
+                  borderRadius="md"
+                  onSubmit={(e: any) => {
+                    e.preventDefault();
+                    createReview({
+                      review: e.target.review.value,
+                      rating: parseInt(e.target.rating.value)
+                    })
+                  }}
+                >
+                  <Textarea name="review" bg="white" placeholder="Review" />
+                  <Input name="rating" bg="white" type="number" placeholder="Rating" />
+                  <Button type="submit" colorScheme="purple">Submit Review</Button>
+                </Flex>
+              </Flex>
+            )}
+          </Stack>
+        </Flex>
+
+        <Heading fontWeight="600" textAlign="center" mb="24px">
+          Reviews
+        </Heading>
+  
+        <Stack spacing={8} mb="64px">
+          {reviews.map((review, id) => (
+            <Flex 
+              key={id} 
+              direction="column"
+              border="2px solid #EAEAEA"
+              borderRadius="md"
+              padding="12px"
+            >
+              <Text>
+                User: {review.user}<br/>
+                Review: {review.review}<br/>
+                Rating: {review.rating}
+              </Text>
+            </Flex>
+          ))}
+        </Stack>
+      </Container>
     </>
   )
 }
@@ -121,4 +181,4 @@ export async function getServerSideProps() {
   }
 }
 
-export default Home
+export default Home;
