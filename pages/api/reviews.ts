@@ -7,7 +7,7 @@ import { ThirdwebSDK } from "@thirdweb-dev/sdk";
 const prisma = new PrismaClient();
 
 const privateKey = process.env.THIRDWEB_AUTH_PRIVATE_KEY || "";
-const sdk = ThirdwebSDK.fromPrivateKey(privateKey, "avalanche-fuji");
+const sdk = ThirdwebSDK.fromPrivateKey(privateKey, "polygon");
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "GET") {
