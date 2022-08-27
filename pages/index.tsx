@@ -7,12 +7,10 @@ import {
   Flex, 
   Input,
   useToast,
-  Box,
   Heading,
   Container,
   Text,
   Stack,
-  createIcon,
   Textarea,
 } from "@chakra-ui/react";
 interface Review {
