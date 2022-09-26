@@ -24,7 +24,11 @@
     "next-auth": "^4.10.3",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-icons": "^4.4.0"
+    "react-icons": "^4.4.0",
+    "@react-three/xr": "3.5.0",
+    "react-three-fiber": "6.0.13",
+    "three": "0.129.0",
+    "troika-3d-text": "0.42.0"
   },
   "devDependencies": {
     "@types/cookie": "^0.5.1",
